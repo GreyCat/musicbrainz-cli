@@ -1,0 +1,73 @@
+#!/bin/sh -e
+
+VERSION=0.1
+
+show_usage()
+{
+	echo "Usage: ${0##*/} [options] <command>"
+	exit 1
+}
+
+show_version()
+{
+	echo "MusicBrainz command line client, version $VERSION"
+	exit 0
+}
+
+fail()
+{
+	echo "Error: $@"
+	exit 1
+}
+
+MBTMP=.
+COOKIES=$MBTMP/cookies.txt
+
+# Parse command-line options
+TEMP=$(getopt -n ${0##*/} -o h,V,m:,l:,p: -l help,version,message:,login:,password: -- "$@") || show_usage
+eval set -- "$TEMP"
+
+while :; do
+	echo "1=$1"
+	case "$1" in
+	-h|--help)
+		show_usage
+		;;
+	-V|--version)
+		show_version
+		;;
+	-m|--message)
+		shift; MESSAGE=$1
+		;;
+	-l|--login)
+		shift; MBLOGIN=$1
+		;;
+	-p|--password)
+		shift; MBPASSWORD=$1
+		;;
+	--)
+		shift; break
+		;;
+	*)
+		break
+		;;
+	esac
+	shift
+done
+
+echo LOGIN=$MBLOGIN
+echo PASSWORD=$MBPASSWORD
+echo MESSAGE=$MESSAGE
+
+wget \
+	-O$MBTMP/p1.html \
+	--load-cookies "$COOKIES" \
+	--save-cookies "$COOKIES" \
+	--keep-session-cookies \
+	--post-data "username=$MBLOGIN&password=$MBPASSWORD&remember_me=1" \
+	http://musicbrainz.org/login
+
+ERRORMSG=$(sed -ne '/span class="error"/ { s,^.*<span class="error">\(.*\)</span>,\1,;s,<[^>]*>,,g;p }' <$MBTMP/p1.html)
+if [ -n "$ERRORMSG" ]; then
+	fail "$ERRORMSG"
+fi
