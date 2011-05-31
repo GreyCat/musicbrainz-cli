@@ -2,6 +2,7 @@
 
 VERSION=0.1
 : ${MBHOST:=test.musicbrainz.org}
+: ${USER_AGENT:="MusicBrainzCLI/$VERSION"}
 
 show_usage()
 {
@@ -34,6 +35,7 @@ query()
 		--load-cookies "$COOKIES" \
 		--save-cookies "$COOKIES" \
 		--keep-session-cookies \
+		--user-agent "$USER_AGENT" \
 		"$@"
 }
 
