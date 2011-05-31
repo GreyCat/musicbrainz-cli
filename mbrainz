@@ -1,6 +1,7 @@
 #!/bin/sh -e
 
 VERSION=0.1
+: ${MBHOST:=test.musicbrainz.org}
 
 show_usage()
 {
@@ -41,7 +42,7 @@ require_login()
 	query \
 		-O$MBTMP/p1.html \
 		--post-data "username=$MBLOGIN&password=$MBPASSWORD&remember_me=1" \
-		http://musicbrainz.org/login
+		"http://$MBHOST/login"
 
 	ERRORMSG=$(sed -ne '/span class="error"/ { s,^.*<span class="error">\(.*\)</span>,\1,;s,<[^>]*>,,g;p }' <$MBTMP/p1.html)
 	if [ -n "$ERRORMSG" ]; then
@@ -101,7 +102,7 @@ MBTMP=.
 COOKIES=$MBTMP/cookies.txt
 
 # Parse command-line options
-TEMP=$(getopt -n ${0##*/} -o h,V,m:,l:,p: -l help,version,message:,login:,password: -- "$@") || show_usage
+TEMP=$(getopt -n ${0##*/} -o h,V,m:,l:,p: -l help,version,message:,login:,password:,host: -- "$@") || show_usage
 eval set -- "$TEMP"
 
 while :; do
@@ -120,6 +121,9 @@ while :; do
 		;;
 	-p|--password)
 		shift; MBPASSWORD=$1
+		;;
+	--host)
+		shift; MBHOST=$1
 		;;
 	--)
 		# Normal end of arguments; always present if there were no
@@ -155,7 +159,7 @@ ar)
 	query \
 		-O$MBTMP/p2.html \
 		--post-data "ar.link_type_id=$AR_TYPE_IDX&ar.edit_note=$MESSAGE&ar.as_auto_editor=1" \
-		"http://musicbrainz.org/edit/relationship/create?type1=${TYPE1}&entity1=${ID1}&entity0=${ID0}&type0=${TYPE0}"
+		"http://$MBHOST/edit/relationship/create?type1=${TYPE1}&entity1=${ID1}&entity0=${ID0}&type0=${TYPE0}"
 	;;
 *)
 	echo "Invalid command: \"$1\""
