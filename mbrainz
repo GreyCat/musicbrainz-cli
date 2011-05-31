@@ -11,7 +11,8 @@ Usage: ${0##*/} [options] <command>
 Options:
 
 Commands:
-- ar <entity-type1> <entity-id1> <entity-type2> <entity-id2> <ar-type>
+- login
+- relate <entity-type1> <entity-id1> <entity-type2> <entity-id2> <ar-type>
 __EOF__
 	exit 1
 }
@@ -173,7 +174,7 @@ login)
 	shift
 	require_login
 	;;
-ar)
+relate)
 	shift
 	TYPE0=$1
 	validate_type $TYPE0
