@@ -121,7 +121,9 @@ create_ar()
 			"http://$MBHOST/edit/relationship/create?type1=${TYPE1}&entity1=${ID1}&entity0=${ID0}&type0=${TYPE0}"
 		if grep -q '<strong>You need to be logged in to view this page.</strong>' $MBTMP/p2.html; then
 			require_login
-		elif grep -q 'Thank you, your edit has been entered into the edit queue for peer review.' $MBTMP/p2.html; then
+		elif grep -q 'A relationship between .* and .* already' $MBTMP/p2.html; then
+			fail 'Relationship already exists'
+		elif egrep -q 'Thank you, your edit has been entered into the edit queue for peer review|Thank you, your edit has been accepted and applied' $MBTMP/p2.html; then
 			break
 		else
 			fail 'Unknown reply for /edit/relationship/create'
