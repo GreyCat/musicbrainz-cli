@@ -37,6 +37,15 @@ query()
 		"$@"
 }
 
+check_login()
+{
+	if ! [ -r "$COOKIES" ]; then
+		require_login
+	elif ! egrep -q "^$MBHOST	FALSE	/	FALSE	[0-9]+	remember_login	" cookies.txt; then
+		require_login
+	fi
+}
+
 require_login()
 {
 	query \
@@ -98,6 +107,27 @@ validate_ar_type()
 	esac
 }
 
+create_ar()
+{
+	check_login
+	local tries=0
+	while [ "$tries" -lt 3 ]; do
+		query \
+			-O$MBTMP/p2.html \
+			--post-data "ar.link_type_id=$AR_TYPE_IDX&ar.edit_note=$MESSAGE&ar.as_auto_editor=1" \
+			"http://$MBHOST/edit/relationship/create?type1=${TYPE1}&entity1=${ID1}&entity0=${ID0}&type0=${TYPE0}"
+		if grep -q '<strong>You need to be logged in to view this page.</strong>' $MBTMP/p2.html; then
+			require_login
+		elif grep -q 'Thank you, your edit has been entered into the edit queue for peer review.' $MBTMP/p2.html; then
+			break
+		else
+			fail 'Unknown reply for /edit/relationship/create'
+		fi
+		tries=$(($tries + 1))
+	done
+}
+
+
 MBTMP=.
 COOKIES=$MBTMP/cookies.txt
 
@@ -139,6 +169,10 @@ done
 
 # Parse commands
 case "$1" in
+login)
+	shift
+	require_login
+	;;
 ar)
 	shift
 	TYPE0=$1
@@ -155,11 +189,8 @@ ar)
 	shift
 	AR_TYPE=$1
 	validate_ar_type $AR_TYPE
-	#require_login
-	query \
-		-O$MBTMP/p2.html \
-		--post-data "ar.link_type_id=$AR_TYPE_IDX&ar.edit_note=$MESSAGE&ar.as_auto_editor=1" \
-		"http://$MBHOST/edit/relationship/create?type1=${TYPE1}&entity1=${ID1}&entity0=${ID0}&type0=${TYPE0}"
+	shift
+	create_ar
 	;;
 *)
 	echo "Invalid command: \"$1\""
