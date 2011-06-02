@@ -21,13 +21,14 @@ module MusicBrainz
     TMPDIR = '.'
     COOKIES = "#{TMPDIR}/cookies.txt"
 
-    attr_accessor :username, :password, :host, :user_agent
+    attr_accessor :username, :password, :host, :user_agent, :message
 
     def initialize(opt = {})
       @user = opt[:user] if opt[:user]
       @password = opt[:password] if opt[:password]
       @host = opt[:host] || ENV['MBHOST'] || 'test.musicbrainz.org'
-      @user_agent = opt[:user_agent] || ENV['USER_AGENT'] || "MusicBrainzCLI/#{VERSION}"    
+      @user_agent = opt[:user_agent] || ENV['USER_AGENT'] || "MusicBrainzCLI/#{VERSION}"
+      @message = opt[:message]
     end
 
     def login
@@ -65,7 +66,7 @@ module MusicBrainz
       begin
         retries -= 1
         res = query(
-          "http://$MBHOST/edit/relationship/create?type1=#{b.type}&entity1=#{b.uuid}&entity0=#{a.uuid}&type0=#{a.type}",
+          "http://#{@host}/edit/relationship/create?type1=#{b.type}&entity1=#{b.uuid}&entity0=#{a.uuid}&type0=#{a.type}",
           "ar.link_type_id=#{type_idx}&ar.edit_note=#{@message}&ar.as_auto_editor=1"
         )
         case res
