@@ -58,7 +58,7 @@ module MusicBrainz
         else raise Error.new("Unable to handle relationship type \"#{type}\"")
         end
       else
-        raise Error.new("Unable to handle entities pair: #{a.type} <=> #{b.type}"
+        raise Error.new("Unable to handle entities pair: #{a.type} <=> #{b.type}")
       end
 
       retries = 3
