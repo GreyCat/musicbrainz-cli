@@ -43,7 +43,7 @@ module MusicBrainz
       end
     end
 
-    def relate(a, type, b)
+    def relate(a, type, b, attrs = {})
       # Swap to make canonical form of relationships
       if a.type == 'work' and b.type == 'recording'
         t = a
@@ -51,24 +51,33 @@ module MusicBrainz
         b = t
       end
 
+      post_data = {
+        'ar.edit_note' => @message,
+        'ar.as_auto_editor' => 1,
+      }
+
       case "#{a.type}_#{b.type}"
       when 'recording_work'
         case type
-        when 'medley' then type_idx = 244
-        when 'performance' then type_idx = 278
+        when 'medley'
+          post_data['ar.link_type_id'] = 244
+        when 'performance'
+          post_data['ar.link_type_id'] = 278
+          parse_attribute(attrs, 'cover', :boolean, post_data, 'ar.attrs.cover')
         else raise Error.new("Unable to handle relationship type \"#{type}\"")
         end
       else
         raise Error.new("Unable to handle entities pair: #{a.type} <=> #{b.type}")
       end
 
+      raise Error.new("Unable to parse attributes #{attrs.inspect} for specified relation") unless attrs.empty?
+
+      post_str = post_data.map { |kv| "#{kv[0]}=#{kv[1]}" }.join('&')
+
       retries = 3
       begin
         retries -= 1
-        res = query(
-          "http://#{@host}/edit/relationship/create?type1=#{b.type}&entity1=#{b.uuid}&entity0=#{a.uuid}&type0=#{a.type}",
-          "ar.link_type_id=#{type_idx}&ar.edit_note=#{@message}&ar.as_auto_editor=1"
-        )
+        res = query("http://#{@host}/edit/relationship/create?type1=#{b.type}&entity1=#{b.uuid}&entity0=#{a.uuid}&type0=#{a.type}", post_str)
         case res
         when /You need to be logged in to view this page./
           login
@@ -104,6 +113,20 @@ module MusicBrainz
       l = nil
       File.open(tmpfile, 'r') { |f| l = f.read }
       return l
+    end
+
+    def parse_attribute(attrs, attr_name, attr_type, post_data, post_name)
+      val = attrs.delete(attr_name)
+      case attr_type
+      when :boolean
+        if val
+          post_data[post_name] = '1'
+        else
+          post_data.delete(post_name)
+        end
+      else
+        raise Error.new("Internal error: unable to handle type \"#{attr_type}\"")
+      end
     end
   end
 end
