@@ -44,6 +44,11 @@ module MusicBrainz
     end
 
     def relate(a, type, b, attrs = {})
+      # Allow to use simple strings in place of "a" and "b" - we'll
+      # silently turn them into objects here
+      a = Entity.parse(a) unless a.respond_to?(:uuid)
+      b = Entity.parse(b) unless b.respond_to?(:uuid)
+
       # Swap to make canonical form of relationships
       if (a.type == 'work' and b.type == 'recording') or (a.type == 'work' and b.type == 'artist')
         t = a
