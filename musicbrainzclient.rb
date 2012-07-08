@@ -74,6 +74,8 @@ module MusicBrainz
           post_data['ar.link_type_id'] = 168
         when 'lyricist'
           post_data['ar.link_type_id'] = 165
+        when 'arranger'
+          post_data['ar.link_type_id'] = 293
         end
       else
         raise Error.new("Unable to handle entities pair: #{a.type} <=> #{b.type}")
