@@ -12,7 +12,7 @@ module MusicBrainz
     end
 
     def self.parse(str)
-      raise Error.new("Unable to parse \"#{str}\" as entity specification") unless str =~ /(work|recording)\/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/
+      raise Error.new("Unable to parse \"#{str}\" as entity specification") unless str =~ /(work|recording|artist)\/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/
       return self.new($1, $2)
     end
   end
@@ -45,7 +45,7 @@ module MusicBrainz
 
     def relate(a, type, b, attrs = {})
       # Swap to make canonical form of relationships
-      if a.type == 'work' and b.type == 'recording'
+      if (a.type == 'work' and b.type == 'recording') or (a.type == 'work' and b.type == 'artist')
         t = a
         a = b
         b = t
@@ -65,6 +65,15 @@ module MusicBrainz
           post_data['ar.link_type_id'] = 278
           parse_attribute(attrs, 'cover', :boolean, post_data, 'ar.attrs.cover')
         else raise Error.new("Unable to handle relationship type \"#{type}\"")
+        end
+      when 'artist_work'
+        case type
+        when 'writer'
+          post_data['ar.link_type_id'] = 167
+        when 'composer'
+          post_data['ar.link_type_id'] = 168
+        when 'lyricist'
+          post_data['ar.link_type_id'] = 165
         end
       else
         raise Error.new("Unable to handle entities pair: #{a.type} <=> #{b.type}")
